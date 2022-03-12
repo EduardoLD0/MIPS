@@ -1,6 +1,6 @@
 Main:
-Lui $S1, 0x1000
-Ori $S1, $S1, 0x0000
+Lui $S1, 1000
+Ori $S1, $S1, 0000
 Addi $S4, $0, 5
 Addi $S5, $0, 0
 

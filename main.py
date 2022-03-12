@@ -5,11 +5,12 @@ from traductor import traducir
 def main():
     file = open("mips.txt", "r") # Abrir archivo con instrucciones
     for i in file:
-        traducir(i) 
+        print(traducir(i)) 
         pass
 
-    
-
-    #print("{}".format(bin(4).replace("0b", "").zfill(5)))
+###FALTA
+###Contar ciclos (stack pointer)
+###Interpretar si el immediate es decimal, hex o etiqueta
+###Manejo de excepciones
 
 main()
