@@ -3,14 +3,10 @@ import traductor
 from traductor import traducir
 
 def main():
-    file = open("mips.txt", "r") # Abrir archivo con instrucciones
-    for i in file:
-        print(traducir(i)) 
-        pass
+    traducir("mips.txt","out.txt")
 
 ###FALTA
 ###Contar ciclos (stack pointer)
-###Interpretar si el immediate es decimal, hex o etiqueta
-###Manejo de excepciones
+###Calculos de direccion de etiqueta segun funcion
 
 main()

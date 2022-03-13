@@ -1,8 +1,14 @@
 from datos import functR, opI, opJ, registros
+
+#string array
+traduccion = []
+
 #Manejo de direcciones de instrucciones
-instAdd = {} #diccionario de etiquetas con su direccion
+labelPending = []
+labelAdd = {} #diccionario de etiquetas con su direccion
 instPoint = 0 #numero de la instruccion
-baseAdd = 0
+baseAdd = "00400000" #direccion base instrucciones
+
 #Contador de ciclos
 numCiclos = 0
 
@@ -14,9 +20,31 @@ def pBin(n,p):
         binary = str("{}".format(bin(int(n)).replace("0b", "").zfill(p)))
     return binary
 
-def traducir(ins):
+# Determina si el immediate de una tipo I es label, direccion hex o numero en binario
+def getImm(immediate, p):
+    if immediate.isdecimal():
+        #print("decimal")
+        ans = pBin(immediate,p)
+    elif immediate[:2] == "0x":
+        #print("hex") 
+        ans = bin(int(immediate, 16))[2:].zfill(p)
+    else:
+        #Manejo de etiquetas
+        if immediate in labelAdd: #Si ya se guardo la direccion de la etiqueta
+            print("label "+str(labelAdd[immediate]*4))
+            add = int(baseAdd, 16) + int(str(labelAdd[immediate]*4))  #Calcular direccion
+            add = int(add)>>2 #con shift left
+            ans = pBin(add, 26)
+        else: #Si la etiqueta esta debajo de donde se llama
+            if immediate not in labelPending:
+                labelPending.append(immediate)
+            print("Pending")
+            ans = "pending"
+    return ans
+
+def interpretar(ins):
     global instPoint, numCiclos
-    if ins != '\n':
+    try:
         ins = ins.replace("(", " ").replace(")", " ").replace(",", " ")
         ins = ins.lower().split() # ["add", "$s1", "$s2", "$s3"]
         print(ins)
@@ -29,7 +57,7 @@ def traducir(ins):
                 rs = "00000"
                 rt = registros[ins[2]]
                 rd = registros[ins[1]]
-                shamt = ins[4]
+                shamt = getImm(ins[3], 5)
             # Caso jr
             elif ins[0] == "jr":
                 rs = registros[ins[1]]
@@ -51,45 +79,45 @@ def traducir(ins):
                 rt = registros[ins[3]]
                 shamt = "00000"
 
-            #Incrementar puntero de instrucciones
-            instPoint+=4 
+            #Incrementar puntero de instrucciones y ciclos de relog
+            instPoint+=1 
             #Contar ciclos
             if ins[0] == "lw": numCiclos += 5
             else: numCiclos += 4
 
             return op + " "+ rs +" "+ rt +" "+ rd +" "+ shamt +" "+ funct
-        
+        #Tipo I
         elif ins[0] in opI:
             op = opI[ins[0]]
             rt = registros[ins[1]]
             # Caso lui
             if ins[0] == "lui":
                 rs ="00000"
-                immediate = pBin(ins[2],16)
+                immediate = getImm(ins[2],16)
             # Caso lw, sw, lbu y sb
             elif ins[0] == "lw" or ins[0] == "sw" or ins[0] == "lbu" or ins[0] == "sb":
-                immediate = pBin(ins[2],16)
+                immediate = getImm(ins[2],16)
                 rs = registros[ins[3]]
             else:
                 # Traducción general tipo I
                 rs = registros[ins[2]]
-                immediate = pBin(ins[3],16)
+                immediate = getImm(ins[3],16)
                 
             #Incrementar puntero de instrucciones
-            instPoint+=4 
+            instPoint+=1 
             #Contar ciclos
             if ins[0] == "beq" or ins[0] == "bne": numCiclos += 3
             else: numCiclos += 4
 
             return op +" "+ rs +" "+ rt +" "+ immediate
-        
+        # Tipo J
         elif ins[0] in opJ:
             # Traduccion general tipo J
             op = opJ[ins[0]]
-            address = pBin(ins[1],26)
+            address = getImm(ins[1],26)
 
             #Incrementar puntero de instrucciones
-            instPoint+=4 
+            instPoint+=1 
             #Contar ciclos
             numCiclos += 3
 
@@ -97,14 +125,36 @@ def traducir(ins):
 
         elif ins[0][-1] == ":": #Si es un label
             label = ins[0].replace(":", "")
-            instAdd[label] = instPoint #Agrega esta etiqueta con su direccion al arreglo
-            print(instAdd)
-            return None
+            labelAdd[label] = instPoint #Agrega esta etiqueta con su direccion al arreglo
+            return ""
         else: #Si es comentario, linea en blanco, o instruccion no valida
-            return None
+            return ""
+    except KeyError:
+        return "Registros invalidos"
+    except IndexError:
+        return "Sintaxis invalida"
 
+def reset():
+    labelPending.clear()
+    labelAdd.clear()
+    traduccion.clear()
 
+def traducir(inFile,outFile):
+    reset()
 
-print(traducir("lw $s1, 5($s2)"))
-print(traducir("Main:"))
+    with open(inFile, "r") as file: # Abrir archivo con instrucciones
+        for i in file:
+            if i != '\n' and i != "":
+                traduccion.append(interpretar(i))
+                #print(traduccion)
+                pass
+    
+    #desps de interpretar
+    print()
+    for l in labelPending:
+        print(l)
 
+    with open(outFile, 'w') as file:
+        for l in traduccion:
+            l += '\n'
+            file.writelines(l)
