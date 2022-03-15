@@ -1,16 +1,22 @@
 from datos import functR, opI, opJ, registros
 
 #string array
+instrucciones = []
 traduccion = []
 
 #Manejo de direcciones de instrucciones
-labelPending = []
+labelPending = {}
 labelAdd = {} #diccionario de etiquetas con su direccion
-instPoint = 0 #numero de la instruccion
+instPoint = -1 #numero de la instruccion
 baseAdd = "00400000" #direccion base instrucciones
 
 #Contador de ciclos
 numCiclos = 0
+instCiclos = []
+retAdd = 0
+
+#def getLabelAdd(label):
+#    return add
 
 # Imprimir binario
 def pBin(n,p):
@@ -31,23 +37,20 @@ def getImm(immediate, p):
     else:
         #Manejo de etiquetas
         if immediate in labelAdd: #Si ya se guardo la direccion de la etiqueta
-            print("label "+str(labelAdd[immediate]*4))
             add = int(baseAdd, 16) + int(str(labelAdd[immediate]*4))  #Calcular direccion
             add = int(add)>>2 #con shift left
             ans = pBin(add, 26)
-        else: #Si la etiqueta esta debajo de donde se llama
+        else: #Si la etiqueta no se ha guardado todavia
             if immediate not in labelPending:
-                labelPending.append(immediate)
-            print("Pending")
-            ans = "pending"
+                labelPending[instPoint+1] = immediate
+            ans = immediate
     return ans
 
 def interpretar(ins):
-    global instPoint, numCiclos
+    global instPoint, numCiclos, instrucciones
     try:
         ins = ins.replace("(", " ").replace(")", " ").replace(",", " ")
         ins = ins.lower().split() # ["add", "$s1", "$s2", "$s3"]
-        print(ins)
         # Traducir tipo R
         if ins[0] in functR:
             op = "000000"
@@ -81,9 +84,10 @@ def interpretar(ins):
 
             #Incrementar puntero de instrucciones y ciclos de relog
             instPoint+=1 
+            instrucciones.append(ins)
             #Contar ciclos
-            if ins[0] == "lw": numCiclos += 5
-            else: numCiclos += 4
+            #if ins[0] == "lw": numCiclos += 5
+            #else: numCiclos += 4
 
             return op + " "+ rs +" "+ rt +" "+ rd +" "+ shamt +" "+ funct
         #Tipo I
@@ -105,9 +109,10 @@ def interpretar(ins):
                 
             #Incrementar puntero de instrucciones
             instPoint+=1 
+            instrucciones.append(ins)
             #Contar ciclos
-            if ins[0] == "beq" or ins[0] == "bne": numCiclos += 3
-            else: numCiclos += 4
+            #if ins[0] == "beq" or ins[0] == "bne": numCiclos += 3
+            #else: numCiclos += 4
 
             return op +" "+ rs +" "+ rt +" "+ immediate
         # Tipo J
@@ -118,14 +123,15 @@ def interpretar(ins):
 
             #Incrementar puntero de instrucciones
             instPoint+=1 
+            instrucciones.append(ins)
             #Contar ciclos
-            numCiclos += 3
+            #numCiclos += 3
 
             return op +" "+ address
 
         elif ins[0][-1] == ":": #Si es un label
             label = ins[0].replace(":", "")
-            labelAdd[label] = instPoint #Agrega esta etiqueta con su direccion al arreglo
+            labelAdd[label] = instPoint+1 #Agrega esta etiqueta con su direccion al arreglo
             return ""
         else: #Si es comentario, linea en blanco, o instruccion no valida
             return ""
@@ -138,23 +144,55 @@ def reset():
     labelPending.clear()
     labelAdd.clear()
     traduccion.clear()
+    instrucciones.clear()
+    instPoint = -1
 
 def traducir(inFile,outFile):
-    reset()
+    reset() #Resetear variables globales
 
-    with open(inFile, "r") as file: # Abrir archivo con instrucciones
+    # Abrir archivo con instrucciones
+    with open(inFile, "r") as file: 
         for i in file:
             if i != '\n' and i != "":
-                traduccion.append(interpretar(i))
-                #print(traduccion)
+                line = interpretar(i)
+                if line != "":
+                    traduccion.append(line)
                 pass
     
-    #desps de interpretar
-    print()
-    for l in labelPending:
-        print(l)
-
+    #Despuess de interpretar
+    #revisar si queda algun label pendiente
+    for l in range(len(instrucciones)):
+        print(l,end=" ")
+        print(instrucciones[l])
+        if l in labelPending:
+            add = labelAdd[labelPending[l]] #direccion guardada del label
+            add = add - l - 1 #calcular direccion
+            add = pBin(add, 16)
+            traduccion[l] = traduccion[l].replace("exit",add)
+            
+    #Print in out file
     with open(outFile, 'w') as file:
         for l in traduccion:
             l += '\n'
             file.writelines(l)
+
+def contarCiclos():
+    global numCiclos
+    global instrucciones
+    i = 0 #puntero
+    while i in range(len(instrucciones)):
+        numCiclos+=1
+        jumps = {"beq", "bne", "j", "jal"}
+        if instrucciones[i][0] in jumps:
+            label = instrucciones[i][-1]
+            if instrucciones[i][0] == "beq" or instrucciones[i][0] == "bne":
+                o = i+1 #no toma el branch
+            else:
+                if label == "$ra":
+                    lAdd = retAdd
+                else:
+                    lAdd = labelAdd[label]
+            print(str(i)+" "+instrucciones[i][0]+" "+label+" "+str(lAdd))
+            i = lAdd
+        i+=1
+    pass

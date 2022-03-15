@@ -5,17 +5,17 @@ Addi $S4, $0, 5
 Addi $S5, $0, 0
 
 For:
-Beq $S4, $S5, Exit
-Sll $t1, $S5, 2
-Add $t1, $S1, $S1
-Lw $S2, 0($t1)
-Lw $S3, 4($t1)
-Sub $S35, $S3, $S4
-Sw $S3, 100($t1)
-Addi $S5, $S5
+Beq $S4, $S5, Exit  
+Sll $t1, $S5, 2     
+Add $t1, $S1, $S1   
+Lw $S2, 0($t1)      
+Lw $S3, 4($t1)      
+Sub $S3, $S3, $S4   
+Sw $S3, 100($t1)    
+Addi $S5, $S5, 1 
 
-J for
+J for               
 
 
-Exit :
+Exit:
 Jr $ra
