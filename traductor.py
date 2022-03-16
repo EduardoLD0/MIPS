@@ -70,11 +70,11 @@ def interpretar(ins):
                 op = "010000"
                 funct = "000000"
                 rd = pBin(ins[1],5)
-                rs = rt = "00000"
+                rs = rt = shamt = "00000"
             # Caso mflo y mfhi
             elif ins[0] == "mflo" or ins[0] == "mfhi":
-                rd = pBin(ins[1],5)
-                rs = rt = "00000"
+                rd = registros[ins[1]]
+                rs = rt = shamt = "00000"
             else:
             # Traduccion estandar tipo R
                 rd = registros[ins[1]]
@@ -223,7 +223,7 @@ def bfs(grafo):
     for k in listaCiclos:
         pila.append(grafo[k][0][0])
         numCiclos += 3
-        while pila[0] != k:
+        while pila[0] != k and len(pila) > 0:
             i = pila.pop()
             for j in grafo[i]:
                 if j[1] == 0:

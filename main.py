@@ -6,10 +6,8 @@ from traductor import traducir, contarCiclos
 def main():
     traducir("mips.txt","out.txt")
     contarCiclos()
-    print(str(traductor.numCiclos[0]) + " + " + str(traductor.numCiclos[1]) + "X")
-###FALTA
-###Contar ciclos (stack pointer)
-###Calculos de direccion de etiqueta segun funcion
-###Agregar ra a etiquetas
+    f = int(input("Ingrese la frecuencia en Ghz: "))
+    print("Numero de ciclos: " + str(traductor.numCiclos[0]) + " + " + str(traductor.numCiclos[1]) + "X")
+    print("Tiempo: " + str(traductor.numCiclos[0] / f) + " + " + str(traductor.numCiclos[1] / f) + "X" + " ns")
 
 main()
