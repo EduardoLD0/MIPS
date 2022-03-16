@@ -6,7 +6,7 @@ from traductor import traducir, contarCiclos
 def main():
     traducir("mips.txt","out.txt")
     contarCiclos()
-    print(traductor.numCiclos)
+    print(str(traductor.numCiclos[0]) + " + " + str(traductor.numCiclos[1]) + "X")
 ###FALTA
 ###Contar ciclos (stack pointer)
 ###Calculos de direccion de etiqueta segun funcion

@@ -11,7 +11,7 @@ instPoint = -1 #numero de la instruccion
 baseAdd = "00400000" #direccion base instrucciones
 
 #Contador de ciclos
-numCiclos = 0
+numCiclos = []
 instCiclos = []
 retAdd = 0
 
@@ -175,7 +175,7 @@ def traducir(inFile,outFile):
         for l in traduccion:
             l += '\n'
             file.writelines(l)
-
+"""
 def contarCiclos():
     global numCiclos
     global instrucciones
@@ -196,3 +196,56 @@ def contarCiclos():
             i = lAdd
         i+=1
     pass
+"""
+
+def getNumInst(inst):
+    if inst == "beq" or inst == "bne" or inst == "j" or inst == "jal":
+        return 3
+    elif inst == "lw":
+        return 5
+    else:
+        return 4
+
+def bfs(grafo):
+    pila = []
+    pila.append(0)
+    numNoCiclos = 0
+    numCiclos = 0
+    listaCiclos = []
+    while len(pila) > 0:
+        i = pila.pop()
+        for j in grafo[i]:
+            if j[1] == 0:
+                pila.append(j[0])
+                numNoCiclos += getNumInst(instrucciones[i][0])
+            elif j[1] == 1:
+                listaCiclos.append(i)
+    for k in listaCiclos:
+        pila.append(grafo[k][0][0])
+        numCiclos += 3
+        while pila[0] != k:
+            i = pila.pop()
+            for j in grafo[i]:
+                if j[1] == 0:
+                    pila.append(j[0])
+                    numCiclos += getNumInst(instrucciones[i][0])
+                elif j[1] == 1:
+                    listaCiclos.append(j[1])
+    return [numNoCiclos, numCiclos]
+
+
+def contarCiclos():
+    global numCiclos
+    grafoInst = []
+    for i in range(len(instrucciones)):
+        inst = instrucciones[i][0]
+        if inst == "j":
+            grafoInst.append([[labelAdd[instrucciones[i][1]], 0]])
+            pass
+        elif inst == "beq":
+            grafoInst.append([[i + 1, 1], [labelAdd[instrucciones[i][3]], 0]])
+            pass
+        else:
+            grafoInst.append([[i + 1, 0]])
+    grafoInst.append([[-1, -1]])
+    numCiclos = bfs(grafoInst)
