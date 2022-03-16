@@ -28,7 +28,7 @@ def pBin(n,p):
 
 # Determina si el immediate de una tipo I es label, direccion hex o numero en binario
 def getImm(immediate, p):
-    if immediate.isdecimal():
+    if immediate.lstrip("-").isdecimal():
         #print("decimal")
         ans = pBin(immediate,p)
     elif immediate[:2] == "0x":

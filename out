@@ -12,5 +12,3 @@
 11 ['addi', '$s5', '$s5', '1']
 12 ['j', 'for']
 13 ['jr', '$ra']
-Ingrese la frecuencia en Ghz: Numero de ciclos: 23 + 36X
-Tiempo: 2.3 + 3.6X ns
