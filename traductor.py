@@ -25,7 +25,6 @@ def pBin(n,p):
     else:
         binary = str("{}".format(bin(int(n)).replace("0b", "").zfill(p)))
     return binary
-
 # Determina si el immediate de una tipo I es label, direccion hex o numero en binario
 def getImm(immediate, p):
     if immediate.lstrip("-").isdecimal():
@@ -81,7 +80,6 @@ def interpretar(ins):
                 rs = registros[ins[2]]
                 rt = registros[ins[3]]
                 shamt = "00000"
-
             #Incrementar puntero de instrucciones y ciclos de relog
             instPoint+=1 
             instrucciones.append(ins)
@@ -89,7 +87,7 @@ def interpretar(ins):
             #if ins[0] == "lw": numCiclos += 5
             #else: numCiclos += 4
 
-            return op + " "+ rs +" "+ rt +" "+ rd +" "+ shamt +" "+ funct
+            return op + " " + rs + " " + rt + " " + rd + " " + shamt + " "+ funct
         #Tipo I
         elif ins[0] in opI:
             op = opI[ins[0]]
@@ -175,28 +173,35 @@ def traducir(inFile,outFile):
         for l in traduccion:
             l += '\n'
             file.writelines(l)
-"""
-def contarCiclos():
-    global numCiclos
-    global instrucciones
-    i = 0 #puntero
-    while i in range(len(instrucciones)):
-        numCiclos+=1
-        jumps = {"beq", "bne", "j", "jal"}
-        if instrucciones[i][0] in jumps:
-            label = instrucciones[i][-1]
-            if instrucciones[i][0] == "beq" or instrucciones[i][0] == "bne":
-                o = i+1 #no toma el branch
-            else:
-                if label == "$ra":
-                    lAdd = retAdd
-                else:
-                    lAdd = labelAdd[label]
-            print(str(i)+" "+instrucciones[i][0]+" "+label+" "+str(lAdd))
-            i = lAdd
-        i+=1
-    pass
-"""
+
+def traducir2(text):
+    reset() #Resetear variables globales
+    file = text.split('\n')
+
+    # Abrir archivo con instrucciones
+    for i in file:
+        print(i)
+        if i != '\n' and i != "":
+            line = interpretar(i)
+            if line != "":
+                traduccion.append(line)
+            pass
+    
+    print(labelPending)
+    print(labelAdd)
+    #Despuess de interpretar
+    #revisar si queda algun label pendiente
+    for l in range(len(instrucciones)):
+        if l in labelPending:
+            print(l,end=" ")
+            print(instrucciones[l])
+            add = labelAdd[labelPending[l]] #direccion guardada del label
+            add = add - l - 1 #calcular direccion
+            add = pBin(add, 16)
+            traduccion[l] = traduccion[l].replace("exit",add)
+
+    return traduccion
+ 
 
 def getNumInst(inst):
     if inst == "beq" or inst == "bne" or inst == "j" or inst == "jal":
@@ -220,32 +225,46 @@ def bfs(grafo):
                 numNoCiclos += getNumInst(instrucciones[i][0])
             elif j[1] == 1:
                 listaCiclos.append(i)
+    numNoCiclos += getNumInst(instrucciones[grafo[i].index(j)][0])
     for k in listaCiclos:
         pila.append(grafo[k][0][0])
         numCiclos += 3
-        while pila[0] != k and len(pila) > 0:
+        while len(pila) > 0:
+            print(pila, k, listaCiclos)
+            if pila[0] == k:
+                break 
             i = pila.pop()
             for j in grafo[i]:
                 if j[1] == 0:
                     pila.append(j[0])
                     numCiclos += getNumInst(instrucciones[i][0])
                 elif j[1] == 1:
-                    listaCiclos.append(j[1])
+                    if i not in listaCiclos:
+                        listaCiclos.append(i)
     return [numNoCiclos, numCiclos]
-
 
 def contarCiclos():
     global numCiclos
     grafoInst = []
+    ra = []
     for i in range(len(instrucciones)):
         inst = instrucciones[i][0]
-        if inst == "j":
+        if inst == "j" or inst == "jal":
             grafoInst.append([[labelAdd[instrucciones[i][1]], 0]])
-            pass
+            if inst == "jal":
+                ra.append(i+1)
         elif inst == "beq":
             grafoInst.append([[i + 1, 1], [labelAdd[instrucciones[i][3]], 0]])
             pass
+        elif inst == "jr":
+            if len(ra) == 0:
+                grafoInst.append([[-1, -1]])
+            else:
+                grafoInst.append([[ra.pop(), 0]])
         else:
             grafoInst.append([[i + 1, 0]])
     grafoInst.append([[-1, -1]])
+    print(grafoInst)
     numCiclos = bfs(grafoInst)
+    print(numCiclos)
+    

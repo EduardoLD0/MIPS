@@ -1,21 +1,10 @@
-Main:
-Lui $S1, 0x1000
-Ori $S1, $S1, 0x0000
-Addi $S4, $0, 5
-Addi $S5, $0, 0
-
-For:
-Beq $S4, $S5, Exit  
-Sll $t1, $S5, 2     
-Add $t1, $S1, $S1   
-Lw $S2, 0($t1)      
-Lw $S3, 4($t1)      
-Sub $S3, $S3, $S4   
-Sw $S3, 100($t1)    
-Addi $S5, $S5, 1 
-
-J for               
-
-
-Exit:
-Jr $ra
+main:
+    addi $s1, $s2, 4
+    sll $s2, $s5, 3
+ciclo:
+    beq $s3, $s4, hola
+    addi $s2, $s4, 8
+    j ciclo
+hola:
+    addi $s2, $s3, 3
+    jr $ra

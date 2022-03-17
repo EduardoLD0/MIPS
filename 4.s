@@ -4,7 +4,7 @@ main:
     lw $s1, 8($s0) #a
     lw $s2, 12($s0) #c
     lw $s3, 16($s0) #d
-    addi $t0, $0, 1 #i = 1
+    addi $t0, $0, -1 #i = 1
     addi $t1, $0, 100 #size
     addi $t2, $0, 0 #offset
 for:

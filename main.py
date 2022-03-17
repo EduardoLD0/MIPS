@@ -1,5 +1,6 @@
 # Programa para traducir instrucciones de MIPS y calcular el tiempo de ejecución
 # Profe ponganos 5 por fa
+
 import traductor
 from traductor import traducir, contarCiclos
 
